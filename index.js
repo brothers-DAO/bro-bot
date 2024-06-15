@@ -156,7 +156,7 @@ async function verify_holdings(msg_if_ok, ids_to_check=null)
   result.filter((x) => x.registered && !x.holds).forEach( async ({id}) => {const {username} = await client.getEntity(id);
                                                                            const delay = update_kick_delay(id)
                                                                            await client.sendMessage(roomChatId, {message:`@${username}: You don't hold the required $BRO for being member of this group\n`
-                                                                                                                          + "  __- Please buy 0.2 $BRO\n"
+                                                                                                                          + "  __- Please buy 0.2 $BRO__\n"
                                                                                                                           + `  __- You will be kicked ${delay}__`,
                                                                                                                  parseMode:"markdown"})
                                                                            })
