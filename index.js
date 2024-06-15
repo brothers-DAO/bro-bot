@@ -398,16 +398,25 @@ function on_donation(msg)
                 .then(answer => setTimeout(() => answer.delete({revoke:true}), 3600_000));
 }
 
+function _break_array(input)
+{
+  const results = [];
+  while (input.length)
+    results.push(input.splice(0, 10));
+  return results;
+}
+
 async function on_list(msg)
 {
   setTimeout(() => msg.delete({revoke:true}), 3600_000);
   if(!await ensure_is_pm(msg) || !await ensure_is_BRO_admin(msg))
     return;
-
+  /* TG limits messages size => We break the lists of registered accounts into sublists of 10 elements and send them one by one */
   await listAccounts()
         .then(l => l.map(({"tg-account-enc":tga, "bro-account":bro}) => `**${tga}** =>>  \` ${base64UrlDecode(bro)}\` `))
-        .then(l => l.join("\n"))
-        .then(s => client.sendMessage(msg.chatId, {parseMode:"md", message:s}));
+        .then(_break_array)
+        .then(l => l.map(x=> x.join("\n")))
+        .then(l => Promise.all(l.map(s=> client.sendMessage(msg.chatId, {parseMode:"md", message:s}))));
 }
 
 function repliedUser(msg)
