@@ -295,14 +295,14 @@ async function on_register(msg)
   const [, acct] = msg.message.split(" ");
   console.log(`Register => ${sender.id} / ${sender.username} / ${msg.chatId} / ${acct}`)
 
-  if(check_abuse(msg.chatId, sender))
-    return;
-
   if(!acct)
   {
     await send_tmp_message(msg.chatId, {message:`${NOK_ICON} Please register with \`/register k:...\``})
     return;
   }
+
+  if(check_abuse(msg.chatId, sender))
+    return;
 
   const answer = await client.sendMessage(msg.chatId, {message:`${WAIT_ICON} Got it: Registering @${sender.username}`})
 
