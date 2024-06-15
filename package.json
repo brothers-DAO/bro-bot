@@ -1,0 +1,41 @@
+{
+  "name": "bro",
+  "version": "1.0.0",
+  "description": "Just bros",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild index.js --bundle --platform=node --outfile=bro_bot.js",
+    "eslint": "eslint index.js utils/*.js"
+  },
+  "dependencies": {
+    "@kadena/client": "^1.11.1",
+    "@kadena/cryptography-utils": "^0.4.2",
+    "@kadena/types": "^0.5.2",
+    "@walletconnect/core": "^2.13.0",
+    "@walletconnect/sign-client": "^2.13.0",
+    "date-arithmetic": "^4.1.0",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.5",
+    "qrcode": "^1.5.3",
+    "telegram": "^2.21.2"
+  },
+  "keywords": [
+    "bro",
+    "kda",
+    "kadena",
+    "bot",
+    "telegram",
+    "blockchain",
+    "crypto"
+  ],
+  "author": "Amir",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.21.4",
+    "eslint": "8.57.0",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0"
+  }
+}
