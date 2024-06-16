@@ -2,14 +2,17 @@ import {} from 'dotenv/config'
 import { register, unregister, status, tipUser, gather_rewards  } from "./utils/transactions.js";
 import { gatherableRewards, listAccounts, getBroPrice, getBroTreasury, isInSync } from "./utils/pactCalls.js";
 import { promises as fs } from 'fs';
+import path from 'node:path';
 import { base64UrlDecode } from "@kadena/cryptography-utils";
 import { checkHoldings } from './utils/verify_holdings.js';
 import { TelegramClient, Api } from "telegram";
+import { CustomFile } from "telegram/client/uploads.js";
 import { StringSession } from "telegram/sessions/index.js";
 import { NewMessage, Raw } from "telegram/events/index.js";
 import { Decimal} from 'decimal.js'
 import * as dateMath from 'date-arithmetic';
 
+const PROFILE_PHOTO = "bot_profile.png"
 
 const roomChatId = BigInt(process.env.ROOM_CHAT_ID);
 const defaultChain = process.env.CHAINID;
@@ -36,6 +39,21 @@ const CONTRACT = "\ud83d\udcc4"
 var client = null;
 var me = null;
 
+
+const build_cf = fname =>  fs.stat(fname)
+                             .then(st => new CustomFile(path.basename(fname),st.size, fname))
+
+const photo_profile_path = () => fs.statfs("./"+PROFILE_PHOTO)
+                                   .then(()=>"./"+PROFILE_PHOTO)
+                                   .catch(()=> fs.statfs("./assets/"+PROFILE_PHOTO)
+                                                 .then(()=>"./assets/"+PROFILE_PHOTO))
+
+
+const update_photo_profile = () => photo_profile_path()
+                                  .then(build_cf)
+                                  .then(cf => client.uploadFile({file:cf, workers:1}))
+                                  .then(uf => client.invoke(new Api.photos.UploadProfilePhoto({file:uf})))
+                                  .catch(err => {console.log("Unable to load the bot photo"); console.error(err)})
 
 
 process.on('uncaughtException', (err) => {
@@ -600,6 +618,8 @@ async function run()
   await client.start({botAuthToken:process.env.BOT_TOKEN})
 
   await fs.writeFile("session.txt", session.save())
+
+  await update_photo_profile()
 
   await convert_admin_ids();
   await check_bot()
