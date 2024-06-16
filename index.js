@@ -571,13 +571,16 @@ async function handle_msg(msg)
 }
 
 
-function handle_new_participant(ev)
+async function handle_new_participant(ev)
 {
-  if(ev.newParticipant)
+  if(ev?.newParticipant?.userId)
   {
     console.log("New participant detected => Checking")
-    return verify_holdings([ev.newParticipant.userId.value])
+    const new_user = await client.getEntity(ev.newParticipant)
+    console.log(`New user = ${new_user.username}`)
+    return verify_holdings(true, [ev.newParticipant.userId.value])
   }
+
 }
 
 async function startup_message()
