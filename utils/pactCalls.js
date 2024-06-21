@@ -5,23 +5,29 @@ import * as dateMath from 'date-arithmetic'
 const _to_decimal = v => v?(v.decimal?Decimal(v.decimal):Decimal(v)):Decimal(0)
 
 const brons = process.env.BRO_NS;
+const eckons = process.env.KADENASWAP_NS
+const eckoChain = process.env.KADENASWAP_CHAIN
 const defaultChain = process.env.CHAINID;
 
+const bro = `${brons}.bro`
+const bro_registry = `${brons}.bro-registry`
+const bro_treasury = `${brons}.bro-treasury`
+
 export const getBal = async (chain, account) => {
-    const code = `(${brons}.bro.get-balance "${account}")`;
+    const code = `(${bro}.get-balance "${account}")`;
     const res = await pactCalls(code, chain);
     const parsedResponse = parsePactResponse(res);
     return parsedResponse;
 }
 
 export const listAccounts = () => {
-    const code = `(${brons}.bro-registry.list-accounts)`;
+    const code = `(${bro_registry}.list-accounts)`;
     return pactCalls(code, defaultChain)
            .then(parsePactResponseThrow)
 }
 
 export const getBroAccount = (user) => {
-    const code = `(${brons}.bro-registry.get-bro-account "${user}")`;
+    const code = `(${bro_registry}.get-bro-account "${user}")`;
     return pactCalls(code, defaultChain)
            .then(parsePactResponse)
   };
@@ -37,22 +43,32 @@ export const isInSync = () => getNow().then(x => dateMath.diff(x, new Date, 'sec
                                       .catch(() => false)
 
 export const getBroAccountsBatch = (users) => {
-  const code = `(map (lambda (enc) (try "" (${brons}.bro-registry.get-bro-account enc))) ${JSON.stringify(users)})`;
+  const code = `(map (lambda (enc) (try "" (${bro_registry}.get-bro-account enc))) ${JSON.stringify(users)})`;
   return pactCalls(code, defaultChain)
         .then(parsePactResponseThrow)
 }
 
 export const getBroBalancesBatch = (chain, accounts) => {
-  const code = `(map (lambda (acct) (try 0.0 (${brons}.bro.get-balance acct))) ${JSON.stringify(accounts)})`;
+  const code = `(map (lambda (acct) (try 0.0 (${bro}.get-balance acct))) ${JSON.stringify(accounts)})`;
   return pactCalls(code, chain)
          .then(parsePactResponseThrow)
          .then(data => data?data.map(_to_decimal):null)
 }
 
+export const getEckoLiquidityBatch = (accounts) => {
+  const code = `(use ${bro_treasury})
+                (map (lambda (x) (round x 12))
+                (map (* (/ ( ${bro}.get-balance (dex-account)) (${eckons}.tokens.total-supply DEX-KEY)))
+                     (map (lambda (acct) (try 0.0 (${eckons}.tokens.get-balance DEX-KEY acct))) ${JSON.stringify(accounts)})))`;
+  return pactCalls(code, eckoChain)
+         .then(parsePactResponseThrow)
+         .then(data => data?data.map(_to_decimal):null)
+}
+
 export const getBroPrice = () => {
-  const code = `(let ((acct (${brons}.bro-treasury.dex-account)))
+  const code = `(let ((acct (${bro_treasury}.dex-account)))
                  (round (/ (coin.get-balance acct)
-                           (${brons}.bro.get-balance acct))
+                           (${bro}.get-balance acct))
                         2))`
   return pactCalls(code, defaultChain)
          .then(parsePactResponseThrow)
@@ -60,7 +76,7 @@ export const getBroPrice = () => {
 }
 
 export const gatherableRewards = () => {
-  const code = `(${brons}.bro-treasury.liquidity-to-remove)`
+  const code = `(${bro_treasury}.liquidity-to-remove)`
   return pactCalls(code, defaultChain)
          .then(parsePactResponseThrow)
          .then(_to_decimal)
@@ -72,10 +88,10 @@ export const getBroTreasury = () => {
                                                                  liquidity_coin: liquidity.mul(resBro.div(resCoin).sqrt())
                                                                 })
 
-  const code = `[(${brons}.bro.get-balance ${brons}.bro-treasury.TREASURY-ACCOUNT)
-                 (at 0 (${brons}.bro-treasury.dex-reserves))
-                 (at 1 (${brons}.bro-treasury.dex-reserves))
-                 (${brons}.bro-treasury.current-liquidity)]`
+  const code = `[(${bro}.get-balance ${bro_treasury}.TREASURY-ACCOUNT)
+                 (at 0 (${bro_treasury}.dex-reserves))
+                 (at 1 (${bro_treasury}.dex-reserves))
+                 (${bro_treasury}.current-liquidity)]`
 
   return pactCalls(code, defaultChain)
          .then(parsePactResponseThrow)

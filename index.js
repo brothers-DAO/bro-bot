@@ -27,6 +27,7 @@ const KICK_ENABLED = process.env.KICK_ENABLED.toLowerCase() == "true"
 
 const KICK_DURATION = parseInt(process.env.KICK_DURATION)
 const KICK_DURATION_UNITS = process.env.KICK_DURATION_UNITS
+const LIQUIDITY_MULTIPLIER = Decimal(process.env.LIQUIDITY_MULTIPLIER)
 
 const WAIT_ICON = "\u23f3"
 const OK_ICON = "\u2705"
@@ -359,10 +360,12 @@ async function on_status(msg)
   await msg.delete({revoke:true})
   await client.sendMessage(sender, {parseMode:"markdown", message:"**------------------------------**\n**Your Bro status:** \n **------------------------------**"})
 
-  const [{account, bal, registered, holds}] = await checkHoldings([sender.id.toString()])
+  const [{account, bal, hold, liquidity, registered, holds}] = await checkHoldings([sender.id.toString()])
 
   await client.sendMessage(sender, {parseMode:"md", message:`**Kadena account:** \`${account?account:NOK_ICON}\``})
-  await client.sendMessage(sender, {parseMode:"md", message:`**Balance:** \`${bal.toString()} $BRO\``})
+  await client.sendMessage(sender, {parseMode:"md", message:`**Balance:** \`${hold.toString()} $BRO\``})
+  await client.sendMessage(sender, {parseMode:"md", message:`**Liquidity:** \`${liquidity.toString()} $BRO\` (x ${LIQUIDITY_MULTIPLIER.toFixed(1)})`})
+  await client.sendMessage(sender, {parseMode:"md", message:`**Total:** \`${bal.toString()} $BRO\``})
   await client.sendMessage(sender, {parseMode:"md", message:`**Are you a brother:** ${(registered && holds)?OK_ICON:NOK_ICON}`})
 
 }
