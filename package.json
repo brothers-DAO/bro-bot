@@ -1,6 +1,6 @@
 {
-  "name": "bro",
-  "version": "1.0.0",
+  "name": "Bro bot",
+  "version": "2.0",
   "description": "Just bros",
   "main": "index.js",
   "type": "module",
