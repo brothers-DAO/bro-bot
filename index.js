@@ -13,6 +13,8 @@ import { Decimal} from 'decimal.js'
 import * as dateMath from 'date-arithmetic';
 
 const PROFILE_PHOTO = "bot_profile.png"
+const OATH = "oath.txt"
+const INSTRUCTIONS = "instructions.txt"
 
 const roomChatId = BigInt(process.env.ROOM_CHAT_ID);
 const defaultChain = process.env.CHAINID;
@@ -44,11 +46,15 @@ var me = null;
 const build_cf = fname =>  fs.stat(fname)
                              .then(st => new CustomFile(path.basename(fname),st.size, fname))
 
-const photo_profile_path = () => fs.statfs("./"+PROFILE_PHOTO)
-                                   .then(()=>"./"+PROFILE_PHOTO)
-                                   .catch(()=> fs.statfs("./assets/"+PROFILE_PHOTO)
-                                                 .then(()=>"./assets/"+PROFILE_PHOTO))
+const asset_path = (x) => fs.statfs("./"+x)
+                            .then(()=>"./"+x)
+                            .catch(()=> fs.statfs("./assets/"+x)
+                                          .then(()=>"./assets/"+x))
 
+const photo_profile_path = () => asset_path(PROFILE_PHOTO)
+
+
+const _read = f  => fs.readFile(f, {encoding:'utf8'})
 
 const update_photo_profile = () => photo_profile_path()
                                   .then(build_cf)
@@ -56,6 +62,12 @@ const update_photo_profile = () => photo_profile_path()
                                   .then(uf => client.invoke(new Api.photos.UploadProfilePhoto({file:uf})))
                                   .catch(err => {console.log("Unable to load the bot photo"); console.error(err)})
 
+
+const get_oath = () => asset_path(OATH)
+                       .then(_read)
+
+const get_instructions = () => asset_path(INSTRUCTIONS)
+                              .then(_read)
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err); })
@@ -540,6 +552,15 @@ async function on_auto_pump(msg)
     await send_tmp_message(msg.chatId, {message:`${NOK_ICON} Auto pumping not possible now`})
 }
 
+async function on_oath(msg)
+{
+  if(!(await ensure_is_brother(msg)))
+    return;
+  await get_oath()
+        .then(m=> client.sendMessage(msg.chatId, {parseMode:"md", message:m}))
+        .then(answer => setTimeout(() => answer.delete({revoke:true}), 3600_000));
+}
+
 
 async function on_help(msg)
 {
@@ -552,6 +573,7 @@ async function on_help(msg)
                                                                             +  "  - **/verify (@tgaccount)**: __Force members $BRO holdings verification (only Bro bot admins)__\n"
                                                                             +  "  - **/price**: __Give me the current price of $BRO__\n"
                                                                             +  "  - **/contract**: __Gives $BRO contract__\n"
+                                                                            +  "  - **/oath**: __Send the Borthers Oath__\n"
                                                                             +  "  - **/treasury**: __Gives $BRO  treasury details__\n"
                                                                             +  "  - **/auto_pump**: __Force $BRO auto-pump  (only for Bro bot admins)__\n"
                                                                             +  "  - **/list**: __List encrypted registered accounts (only in PM, and for Bro bot admins)__\n"
@@ -569,6 +591,7 @@ const MSG_HANDLERS = {"/help":on_help,
                       "/tip":on_tip,
                       "/contract":on_contract,
                       "/donate":on_donation,
+                      "/oath": on_oath,
                       "/auto_pump": on_auto_pump,
                       "/list": on_list,
                       "/treasury": on_treasury,
@@ -599,7 +622,13 @@ async function handle_new_participant(ev)
     console.log("New participant detected => Checking")
     const new_user = await client.getEntity(ev.newParticipant)
     console.log(`New user = ${new_user.username}`)
-    return verify_holdings(true, [ev.newParticipant.userId.value])
+    await get_oath()
+          .then(m=> client.sendMessage(roomChatId, {parseMode:"md", message:m + `\n 💡 Please take the oath by thumbing this message @${new_user.username}`}))
+          .then(answer => setTimeout(() => answer.delete({revoke:true}), 259200_000))
+          .then(get_instructions)
+          .then(m=> client.sendMessage(roomChatId, {parseMode:"md", message:`Please read carefully @${new_user.username}\n\n`+m}))
+          .then(answer => setTimeout(() => answer.delete({revoke:true}), 3600_000))
+          .then(() => verify_holdings(true, [ev.newParticipant.userId.value]))
   }
 
 }
@@ -607,11 +636,15 @@ async function handle_new_participant(ev)
 async function startup_message()
 {
   console.log(`Bot Starting: => Advertising ${roomChatId}`)
-  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot started** \n__Take care, Stu is watching you__"})
+  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.0 Started** \n__Take care, Stu is watching you__"})
 }
 
 async function run()
 {
+  console.log("===> Checking the required files")
+  await get_oath().catch(()=> console.error(`Cannot find ${OATH}`))
+  await get_instructions().catch(()=> console.error(`Cannot find ${INSTRUCTIONS}`))
+
   console.log("===> Connecting to TG")
   const session = await fs.readFile("session.txt", "ascii")
                           .then((data) => new StringSession(data))
@@ -629,7 +662,6 @@ async function run()
 
   console.log("===> Checking the block-chain")
   await check_sync()
-
 
   client.addEventHandler( (ev) => handle_msg(ev.message), new NewMessage({}))
   client.addEventHandler( (ev) => handle_new_participant(ev), new Raw({types:[Api.UpdateChannelParticipant]}))

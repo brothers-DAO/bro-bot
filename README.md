@@ -5,4 +5,9 @@ Note: The WalletConnect feature has been disabled in will be restored in the fut
 
 ## Profile photo
 
-The requires a  `bot_profile.png` in the same directory to update the bot's profile photo.
+The bot requires a `bot_profile.png` in the same directory to update the bot's profile photo.
+
+## Oath and instructions
+
+The bot requires 2 files: `oath.txt` and `instructions.txt`. They contains message sent automatically to new users and when using the `/oath` command.
+ 
