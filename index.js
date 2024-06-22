@@ -370,7 +370,15 @@ async function on_status(msg)
 {
   const sender = await msg.getSender()
   await msg.delete({revoke:true})
-  await client.sendMessage(sender, {parseMode:"markdown", message:"**------------------------------**\n**Your Bro status:** \n **------------------------------**"})
+  try
+  {
+    await client.sendMessage(sender, {parseMode:"markdown", message:"**------------------------------**\n**Your Bro status:** \n **------------------------------**"})
+  }
+  catch
+  {
+    await send_tmp_message(msg.chatId, {message:`${NOK_ICON} Privacy reason: Please open a DM with me`});
+    return;
+  }
 
   const [{account, bal, hold, liquidity, registered, holds}] = await checkHoldings([sender.id.toString()])
 
