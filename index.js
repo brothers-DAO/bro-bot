@@ -628,7 +628,9 @@ async function handle_new_participant(ev)
   if(ev?.newParticipant?.userId)
   {
     console.log("New participant detected => Checking")
-    const new_user = await client.getEntity(ev.newParticipant)
+    await client.getParticipants(roomChatId);
+    const new_user = await client.getEntity(ev.newParticipant.userId);
+
     console.log(`New user = ${new_user.username}`)
     await get_oath()
           .then(m=> client.sendMessage(roomChatId, {parseMode:"md", message:m + `\n 💡 Please take the oath by thumbing this message @${new_user.username}`}))
@@ -644,7 +646,7 @@ async function handle_new_participant(ev)
 async function startup_message()
 {
   console.log(`Bot Starting: => Advertising ${roomChatId}`)
-  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.0 Started** \n__Take care, Stu is watching you__"})
+  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.1 Started** \n__Take care, Stu is watching you__"})
 }
 
 async function run()
