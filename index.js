@@ -39,6 +39,8 @@ const DOLLARS = "\ud83d\udcb5"
 const CONTRACT = "\ud83d\udcc4"
 
 
+const timers = [];
+
 var client = null;
 var me = null;
 
@@ -581,6 +583,7 @@ async function on_help(msg)
                                                                             +  "  - **/verify (@tgaccount)**: __Force members $BRO holdings verification (only Bro bot admins)__\n"
                                                                             +  "  - **/price**: __Give me the current price of $BRO__\n"
                                                                             +  "  - **/contract**: __Gives $BRO contract__\n"
+                                                                            +  "  - **/kill**: __Kill the Bot__\n"
                                                                             +  "  - **/oath**: __Send the Borthers Oath__\n"
                                                                             +  "  - **/treasury**: __Gives $BRO  treasury details__\n"
                                                                             +  "  - **/auto_pump**: __Force $BRO auto-pump  (only for Bro bot admins)__\n"
@@ -589,6 +592,21 @@ async function on_help(msg)
                                                                             +  "  - **/tip (@tgaccount=)*: __Tip an account or tip the replied message (only for TG group admins)__\n"})
   setTimeout( () =>answer.delete({revoke:true}), 60_000)
   setTimeout( () =>msg.delete({revoke:true}), 60_000)
+}
+
+async function on_kill(msg)
+{
+  if(!await ensure_is_BRO_admin(msg))
+    return;
+
+  console.log("-------------------------------------------")
+  console.log(" BOT GOT KILLED !!!  => PLEASE RESTART")
+  console.log("-------------------------------------------")
+
+  timers.forEach(clearInterval)
+  client.listEventHandlers().forEach( ([ev,cb]) => client.removeEventHandler(cb, ev))
+
+  send_tmp_message(msg.chatId, {message:`${OK_ICON} Bot got killed => Inactive until restart`})
 }
 
 const MSG_HANDLERS = {"/help":on_help,
@@ -602,6 +620,7 @@ const MSG_HANDLERS = {"/help":on_help,
                       "/oath": on_oath,
                       "/auto_pump": on_auto_pump,
                       "/list": on_list,
+                      "/kill": on_kill,
                       "/treasury": on_treasury,
                       "/price": on_price}
 
@@ -646,7 +665,7 @@ async function handle_new_participant(ev)
 async function startup_message()
 {
   console.log(`Bot Starting: => Advertising ${roomChatId}`)
-  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.1 Started** \n__Take care, Stu is watching you__"})
+  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.2 Started** \n__Take care, Stu is watching you__"})
 }
 
 async function run()
@@ -678,8 +697,8 @@ async function run()
   await startup_message()
   await verify_holdings()
   await do_auto_pump()
-  setInterval(verify_holdings, 3600_000);
-  setInterval(do_auto_pump, 6*3610_000);
+  timers.push(setInterval(verify_holdings, 3600_000));
+  timers.push(setInterval(do_auto_pump, 6*3610_000));
   //console.log(await client.getParticipants(roomChatId))
 }
 
