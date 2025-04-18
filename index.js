@@ -86,8 +86,11 @@ async function convert_admin_ids ()
   console.log(`BRO Admins: ${admins_list()}`)
 }
 
+/* Venerable brothers => Never kick them */
+const VENERABLE_BROTHERS = ["Janissary63"]
 
 const brothers_ids = () => client.getParticipants(roomChatId)
+                                 .then(list => list.filter(x=> !VENERABLE_BROTHERS.includes(x.username)))
                                  .then(list=> list.filter(x => !x.bot).map( x=> x.id.value))
 
 const send_tmp_message = (peer, data) => client.sendMessage(peer, data)
@@ -665,7 +668,7 @@ async function handle_new_participant(ev)
 async function startup_message()
 {
   console.log(`Bot Starting: => Advertising ${roomChatId}`)
-  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.2 Started** \n__Take care, Stu is watching you__"})
+  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.3 Started** \n__Take care, Stu is watching you__"})
 }
 
 async function run()
