@@ -101,8 +101,8 @@ const kick_delay_map = new Map()
 
 
 /* WARMUP stuffs */
-const WARMUP_START = new Date('2025-12-01T12:00:00Z');
-const WARMUP_END = new Date('2025-12-15T13:00:00Z');
+const WARMUP_START = new Date('2025-12-01T18:00:00Z');
+const WARMUP_END = new Date('2025-12-20T12:00:00Z');
 const WARMUP_DURATION = dateMath.diff(WARMUP_START, WARMUP_END, "hours")
 
 const in_warmup = () => (new Date() < WARMUP_END)
