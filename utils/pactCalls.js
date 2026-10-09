@@ -36,11 +36,11 @@ export const getNow = () => {
     const code = `(free.util-time.now)`;
     return pactCalls(code, defaultChain)
            .then(parsePactResponseThrow)
-           .then(x => new Date(x.timep))
+           .then(x => new Date(x.timep ?? x.time))
   };
 
 export const isInSync = () => getNow().then(x => dateMath.diff(x, new Date, 'seconds') < 180)
-                                      .catch(() => false)
+                                      .catch((e) => {console.log(e); return false})
 
 export const getBroAccountsBatch = (users) => {
   const code = `(map (lambda (enc) (try "" (${bro_registry}.get-bro-account enc))) ${JSON.stringify(users)})`;
