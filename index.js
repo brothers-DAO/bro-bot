@@ -668,7 +668,7 @@ async function handle_new_participant(ev)
 async function startup_message()
 {
   console.log(`Bot Starting: => Advertising ${roomChatId}`)
-  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.3 Started** \n__Take care, Stu is watching you__"})
+  await client.sendMessage(roomChatId, {parseMode:"markdown", message:"**Brothers Bot v2.4 Started** \n__Stu has already fucked you__"})
 }
 
 async function run()
